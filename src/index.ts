@@ -1,6 +1,8 @@
 import joplin from 'api';
 import { MenuItemLocation } from 'api/types';
 
+const fs = (joplin as any).require('fs-extra');
+const path = require('path');
 
 joplin.plugins.register({
 	onStart: async function () {
@@ -54,6 +56,33 @@ joplin.plugins.register({
 			}
 		]);
 
+		/*******************Exporting Code*******************/
+		await joplin.commands.register({
+            name: 'exportingProcedure',
+			execute: async (...args) => {
+				
+				//---------prequesite variables
+				let swg = args[1].basic_info.swg;
+				let dest_Path = args[1].basic_info.dest_Path;
+
+				//----------check for the absolute path
+				if (path.isAbsolute(dest_Path)) {
+					if (swg === 'hugo') {
+						//---------handle exporting into hugo
+
+					} else if (swg === 'gatsby') {
+						//---------handle exporting into gatsby
+
+					} else if (swg === 'jekyll') {
+						//---------handle exporting into gatsby
+
+                	}
+				} else {
+					alert(' Path is incorrect! ');
+				}
+
+            },
+        });
 		/*******************Driver Code*******************/
 
 		//---------respective command for main button
