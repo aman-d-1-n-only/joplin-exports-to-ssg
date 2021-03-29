@@ -4,8 +4,29 @@ import { MenuItemLocation } from 'api/types';
 const fs = (joplin as any).require('fs-extra');
 const path = require('path');
 
+//---------collecting and transfering the static file
+async function resourceFetcher( note  , resourceDir : string , destPath : string  ) {
+	const { items } = await joplin.data.get(['notes', note.id, 'resources']);
+	items.forEach(resource => {
+		const ext = resource.title.split('.')[1];
+		const srcPath = path.join( resourceDir, `${resource.id}.${ext}`);
+		const dest_Path = path.join( destPath , resource.title  )
+		fs.copyFile(srcPath, dest_Path, (err) => {
+			if (err) {
+				console.log(err);
+				alert('Some issue with exporting static files.');
+				return;
+			} else {
+				// note.body.replace( resource.id , `/resources/${resource.title}`);
+			}	
+		});
+	});
+};
+
 joplin.plugins.register({
 	onStart: async function () {
+
+		const resourceDir = await joplin.settings.globalValue('resourceDir');
 
 		/*******************Dialog Configurations*******************/
 		const dialogs = joplin.views.dialogs;
@@ -20,8 +41,8 @@ joplin.plugins.register({
 			<div class="dialog-main">
 				<form id="swg-form" name="basic_info">
             	    <div class="field">
-            	        <label for="swg">Choose your SWG (<span>*required</span>) </label>
-					    <select name="swg" id="swg">
+            	        <label for="ssg">Choose your SSG (<span>*required</span>) </label>
+					    <select name="ssg" id="ssg">
   				  	    	<option value="hugo">Hugo</option>
   				  	    	<option value="gatsby">Gastby</option>
   				  	    	<option value="jekyll">Jekyll</option>
@@ -62,23 +83,41 @@ joplin.plugins.register({
 			execute: async (...args) => {
 				
 				//---------prequesite variables
-				let swg = args[1].basic_info.swg;
+				let ssg = args[1].basic_info.ssg;
 				let dest_Path = args[1].basic_info.dest_Path;
+				let frontMatter = args[1].basic_info.frontMatter;
+				const basketFolder = await joplin.data.get(['folders', args[0]], { fields: ['id', 'title', 'body'] });
+				const { items } = await joplin.data.get(['notes'], { fields: ['id', 'title', 'body', 'parent_id'] });
+				const filteredNotes = items.filter( note => {
+					return (note.parent_id === args[0]);
+				});
+
 
 				//----------check for the absolute path
 				if (path.isAbsolute(dest_Path)) {
-					if (swg === 'hugo') {
+					if (ssg === 'hugo') {
 						//---------handle exporting into hugo
+						const folderName = basketFolder.title + '-' + basketFolder.id ;
+						await fs.mkdirp(path.join(dest_Path, 'content', folderName));
 
-					} else if (swg === 'gatsby') {
+						await fs.mkdirp( path.join( dest_Path ,'static', 'resources' ) );
+						const resourceDestPath = (path.join(dest_Path, 'static', 'resources'));
+
+						filteredNotes.forEach(async note => {
+							await resourceFetcher( note , resourceDir , resourceDestPath );
+							note.body = frontMatter + '\n' + note.body;
+							fs.writeFile(path.join(dest_Path, 'content', folderName, `${note.title}.md`), note.body);
+						});
+						
+					} else if (ssg === 'gatsby') {
 						//---------handle exporting into gatsby
 
-					} else if (swg === 'jekyll') {
+					} else if (ssg === 'jekyll') {
 						//---------handle exporting into gatsby
 
                 	}
 				} else {
-					alert(' Path is incorrect! ');
+					alert('Provided path is not valid !');
 				}
 
             },
