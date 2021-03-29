@@ -119,7 +119,16 @@ joplin.plugins.register({
 
 					} else if (ssg === 'gatsby') {
 						//---------handle exporting into gatsby
+						await fs.mkdirp(path.join(dest_Path, 'src', 'markdown'));
 
+						await fs.mkdirp( path.join( dest_Path ,'static', 'resources' ) );
+						const resourceDestPath = (path.join(dest_Path, 'static', 'resources'));
+
+						filteredNotes.forEach( async note => {
+							await resourceFetcher( note , resourceDir , resourceDestPath );
+							note.body = frontMatter + '\n' + note.body;
+							fs.writeFile(path.join(dest_Path, 'src', 'markdown', `${note.title}-${note.id}.md`), note.body);
+						});
 					} else if (ssg === 'jekyll') {
 						//---------handle exporting into gatsby
 						fs.readdir(path.join(dest_Path, '_posts'), async (err, files) => {
