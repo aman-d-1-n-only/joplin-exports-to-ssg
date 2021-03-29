@@ -39,6 +39,9 @@ joplin.plugins.register({
 		</div>
 		`);
 
+		//---------add the css file for form
+		await dialogs.addScript(ssg_dialog, './form.css');
+
 		//---------setting controls of dialog
 		await dialogs.setButtons(ssg_dialog, [
 			{
