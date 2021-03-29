@@ -58,7 +58,10 @@ joplin.plugins.register({
             name: 'staticSiteExporterDialog',
             label: 'Export to SSG',
             execute: async (folderId: string) => {
-
+				const { id, formData } = await dialogs.open(ssg_dialog);
+                if ( id == "submit") {
+                    await joplin.commands.execute('exportingProcedure', folderId , formData);
+                }
             },
 		});
 		
