@@ -49,21 +49,21 @@ joplin.plugins.register({
 			<div class="dialog-main">
 				<form id="swg-form" name="basic_info">
             	    <div class="field">
-            	        <label for="ssg">Choose your SSG (<span>*required</span>) </label>
-					    <select name="ssg" id="ssg">
-  				  	    	<option value="hugo">Hugo</option>
-  				  	    	<option value="gatsby">Gastby</option>
-  				  	    	<option value="jekyll">Jekyll</option>
-					    </select>
-            	    </div>
-
-            	    <div class="field">
-            	        <label for="dest_Path"> Project Path (<span>*required</span>) </label>
-					    <input id="dest_Path" type="text" name="dest_Path" required autocomplete placeholder="Paste the absolute path" />   
+						<p class="labels" >Choose your SSG (<span>*required</span>)</p>
+						<label for="hugo">Hugo</label>
+  						<input type="radio" id="hugo" name="ssg" value="hugo"><br>
+  						<label for="gatsby">Gatsby</label>
+  						<input type="radio" id="gatsby" name="ssg" value="gatsby"><br>
+  						<label for="jekyll">Jekyll</label>
+  						<input type="radio" id="jekyll" name="ssg" value="jekyll"><br>
             	    </div>
             	    <div class="field">
-					    <label for="frontMatter" >Front Matter (<span>optional</span>) </label>
-					    <textarea id = "frontMatter" rows = 10 cols="20" name="frontMatter" autocomplete ></textarea>
+            	        <label class="block-element labels" for="dest_Path"> Project Path (<span>*required</span>) </label>
+					    <input class="block-element" id="dest_Path" type="text" name="dest_Path" required autocomplete placeholder="Paste the absolute path" />   
+            	    </div>
+            	    <div class="field">
+					    <label class="block-element labels" for="frontMatter" >Front Matter (<span>optional</span>) </label>
+					    <textarea placeholder="Type front matter here..." class="block-element" id = "frontMatter" rows = 10 cols="20" name="frontMatter"></textarea>
             	    </div>
 				</form> 
 			</div>
@@ -100,57 +100,45 @@ joplin.plugins.register({
 					return (note.parent_id === args[0]);
 				});
 
-
-				//----------check for the absolute path
-				if (path.isAbsolute(dest_Path)) {
-					if (ssg === 'hugo') {
-						//---------handle exporting into hugo
-						const folderName = basketFolder.title + '-' + basketFolder.id ;
-						await fs.mkdirp(path.join(dest_Path, 'content', folderName));
-
-						await fs.mkdirp( path.join( dest_Path ,'static', 'resources' ) );
-						const resourceDestPath = (path.join(dest_Path, 'static', 'resources'));
-
-						filteredNotes.forEach(async note => {
-							await resourceFetcher( note , resourceDir , resourceDestPath );
-							note.body = frontMatter + '\n' + note.body;
-							fs.writeFile(path.join(dest_Path, 'content', folderName, `${note.title}.md`), note.body);
-						});
-
-					} else if (ssg === 'gatsby') {
-						//---------handle exporting into gatsby
-						await fs.mkdirp(path.join(dest_Path, 'src', 'markdown'));
-
-						await fs.mkdirp( path.join( dest_Path ,'static', 'resources' ) );
-						const resourceDestPath = (path.join(dest_Path, 'static', 'resources'));
-
+				if (ssg === 'hugo') {
+					//---------handle exporting into hugo
+					const folderName = basketFolder.title + '-' + basketFolder.id ;
+					await fs.mkdirp(path.join(dest_Path, 'content', folderName));
+					await fs.mkdirp( path.join( dest_Path ,'static', 'resources' ) );
+					const resourceDestPath = (path.join(dest_Path, 'static', 'resources'));
+					filteredNotes.forEach(async note => {
+						await resourceFetcher( note , resourceDir , resourceDestPath );
+						note.body = frontMatter + '\n' + note.body;
+						fs.writeFile(path.join(dest_Path, 'content', folderName, `${note.title}.md`), note.body);
+					});
+				} else if (ssg === 'gatsby') {
+					//---------handle exporting into gatsby
+					await fs.mkdirp(path.join(dest_Path, 'src', 'markdown'));
+					await fs.mkdirp( path.join( dest_Path ,'static', 'resources' ) );
+					const resourceDestPath = (path.join(dest_Path, 'static', 'resources'));
+					filteredNotes.forEach( async note => {
+						await resourceFetcher( note , resourceDir , resourceDestPath );
+						note.body = frontMatter + '\n' + note.body;
+						fs.writeFile(path.join(dest_Path, 'src', 'markdown', `${note.title}-${note.id}.md`), note.body);
+					});
+				} else if (ssg === 'jekyll') {
+					//---------handle exporting into gatsby
+					fs.readdir(path.join(dest_Path, '_posts'), async (err, files) => {
+						if (err) {
+							await fs.mkdirp( path.join( dest_Path , '_posts' ) );
+						}
+						await fs.mkdirp(path.join(dest_Path, 'resources'));
+						const resourceDestPath = (path.join(dest_Path , 'resources'));
+						
 						filteredNotes.forEach( async note => {
 							await resourceFetcher( note , resourceDir , resourceDestPath );
 							note.body = frontMatter + '\n' + note.body;
-							fs.writeFile(path.join(dest_Path, 'src', 'markdown', `${note.title}-${note.id}.md`), note.body);
+							note.title = titleCreator(note.title);
+							fs.writeFile(path.join(dest_Path , '_posts' , `${note.title}-${note.id}.md`), note.body);
 						});
-					} else if (ssg === 'jekyll') {
-						//---------handle exporting into gatsby
-						fs.readdir(path.join(dest_Path, '_posts'), async (err, files) => {
-							if (err) {
-								await fs.mkdirp( path.join( dest_Path , '_posts' ) );
-							}
-
-							await fs.mkdirp(path.join(dest_Path, 'resources'));
-							const resourceDestPath = (path.join(dest_Path , 'resources'));
-							
-							filteredNotes.forEach( async note => {
-								await resourceFetcher( note , resourceDir , resourceDestPath );
-								note.body = frontMatter + '\n' + note.body;
-								note.title = titleCreator(note.title);
-								fs.writeFile(path.join(dest_Path , '_posts' , `${note.title}-${note.id}.md`), note.body);
-							});
-						});
-
-                	}
-				} else {
-					alert('Provided path is not valid !');
-				}
+					});
+                }
+				
 
             },
         });
@@ -162,7 +150,16 @@ joplin.plugins.register({
             label: 'Export to SSG',
             execute: async (folderId: string) => {
 				const { id, formData } = await dialogs.open(ssg_dialog);
-                if ( id == "submit") {
+				if (id == "submit") {
+					//---------form validation
+					if (!formData.basic_info.ssg) {
+						alert('Please choose one static site generator.');
+						return;
+					}
+					if (!path.isAbsolute(formData.basic_info.dest_Path)) {
+						alert('Provided path is not valid.')
+						return;
+					}
                     await joplin.commands.execute('exportingProcedure', folderId , formData);
                 }
             },
