@@ -4,6 +4,14 @@ import { MenuItemLocation } from 'api/types';
 const fs = (joplin as any).require('fs-extra');
 const path = require('path');
 
+//---------creates title for note as required in jekyll
+function titleCreator( title : string ) {
+	let today = new Date();
+	let fPart = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate() + '-';
+	let sPart = title.split(' ').join('-');
+	return (fPart + sPart);
+}
+
 //---------collecting and transfering the static file
 async function resourceFetcher( note  , resourceDir : string , destPath : string  ) {
 	const { items } = await joplin.data.get(['notes', note.id, 'resources']);
@@ -108,12 +116,27 @@ joplin.plugins.register({
 							note.body = frontMatter + '\n' + note.body;
 							fs.writeFile(path.join(dest_Path, 'content', folderName, `${note.title}.md`), note.body);
 						});
-						
+
 					} else if (ssg === 'gatsby') {
 						//---------handle exporting into gatsby
 
 					} else if (ssg === 'jekyll') {
 						//---------handle exporting into gatsby
+						fs.readdir(path.join(dest_Path, '_posts'), async (err, files) => {
+							if (err) {
+								await fs.mkdirp( path.join( dest_Path , '_posts' ) );
+							}
+
+							await fs.mkdirp(path.join(dest_Path, 'resources'));
+							const resourceDestPath = (path.join(dest_Path , 'resources'));
+							
+							filteredNotes.forEach( async note => {
+								await resourceFetcher( note , resourceDir , resourceDestPath );
+								note.body = frontMatter + '\n' + note.body;
+								note.title = titleCreator(note.title);
+								fs.writeFile(path.join(dest_Path , '_posts' , `${note.title}-${note.id}.md`), note.body);
+							});
+						});
 
                 	}
 				} else {
