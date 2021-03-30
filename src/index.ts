@@ -14,10 +14,10 @@ function titleCreator( title : string ) {
 
 //---------collecting and transfering the static file
 async function resourceFetcher(note, resourceDir: string, destPath: string , ssg ) {
-	const { items } = await joplin.data.get(['notes', note.id, 'resources']);
+	const { items } = await joplin.data.get(['notes', note.id, 'resources'] , { fields: ['id', 'title', 'file_extension']} );
 	for( var i = 0; i < items.length; i++ ) {
 		const resource = items[i];
-		const ext = resource.title.split('.')[1];
+		const ext = resource.file_extension;
 		const srcPath = path.join(resourceDir, `${resource.id}.${ext}`);
 		const dest_Path = path.join(destPath, resource.title)
 		await fs.copy(srcPath, dest_Path);
@@ -33,7 +33,8 @@ async function resourceFetcher(note, resourceDir: string, destPath: string , ssg
 
 joplin.plugins.register({
 	onStart: async function () {
-
+		const { items } = await joplin.data.get(['notes', 'e05d81c2b1b040c2abaa02ed37ed5269', 'resources'], );
+		console.log(items);
 		const resourceDir = await joplin.settings.globalValue('resourceDir');
 
 		/*******************Dialog Configurations*******************/
@@ -44,7 +45,7 @@ joplin.plugins.register({
 		await dialogs.setHtml(ssg_dialog, `
 		<div class="dialog" >
 			<div class="dialog-header">
-				<h2>Static Website Generator</h2>
+				<h2>Exporting Configuration</h2>
 			</div>
 			<div class="dialog-main">
 				<form id="swg-form" name="basic_info">
@@ -112,7 +113,6 @@ joplin.plugins.register({
 					for (var i = 0; i < filteredNotes.length; i++) {
 						const note = filteredNotes[i];
 						await resourceFetcher(note, resourceDir, resourceDestPath, ssg);
-						console.log(note.body, 'hugo ke andar wala');
 						note.body = frontMatter + '\n' + note.body;
 						fs.writeFile(path.join(dest_Path, 'content', folderName, `${note.title}.md`), note.body);
 					};
