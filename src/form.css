@@ -1,0 +1,35 @@
+.dialog {
+  padding: 0;
+  margin: 0;
+}
+
+.dialog-header {
+  border-bottom: 1px solid black;
+  text-align: center;
+}
+
+form {
+  padding: 0.5rem;
+}
+
+.labels {
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+input,
+textarea {
+  padding: 0.5rem;
+}
+
+.block-element {
+  display: block;
+}
+
+span {
+  color: red;
+}
+
+.field {
+  margin: 0.5rem 0;
+}
