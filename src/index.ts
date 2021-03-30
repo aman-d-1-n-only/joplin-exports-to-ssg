@@ -13,22 +13,22 @@ function titleCreator( title : string ) {
 }
 
 //---------collecting and transfering the static file
-async function resourceFetcher( note  , resourceDir : string , destPath : string  ) {
+async function resourceFetcher(note, resourceDir: string, destPath: string , ssg ) {
 	const { items } = await joplin.data.get(['notes', note.id, 'resources']);
-	items.forEach(resource => {
+	for( var i = 0; i < items.length; i++ ) {
+		const resource = items[i];
 		const ext = resource.title.split('.')[1];
-		const srcPath = path.join( resourceDir, `${resource.id}.${ext}`);
-		const dest_Path = path.join( destPath , resource.title  )
-		fs.copyFile(srcPath, dest_Path, (err) => {
-			if (err) {
-				console.log(err);
-				alert('Some issue with exporting static files.');
-				return;
-			} else {
-				// note.body.replace( resource.id , `/resources/${resource.title}`);
-			}	
-		});
-	});
+		const srcPath = path.join(resourceDir, `${resource.id}.${ext}`);
+		const dest_Path = path.join(destPath, resource.title)
+		await fs.copy(srcPath, dest_Path);
+		if (ssg === 'hugo') {
+			note.body = note.body.replace( `:/${resource.id}`,  `/resources/${resource.title}` );
+		} else if (ssg === 'gatsby') {
+			note.body = note.body.replace( `:/${resource.id}`,  path.join('..', '..', 'static' , `${resource.title}`));
+		} else if (ssg === 'jekyll') {
+			note.body = note.body.replace( `:/${resource.id}`, path.join('..', 'resources', `${resource.title}`));
+		}
+	};
 };
 
 joplin.plugins.register({
@@ -103,45 +103,59 @@ joplin.plugins.register({
 				if (ssg === 'hugo') {
 					//---------handle exporting into hugo
 					const folderName = basketFolder.title + '-' + basketFolder.id ;
-					await fs.mkdirp(path.join(dest_Path, 'content', folderName));
-					await fs.mkdirp( path.join( dest_Path ,'static', 'resources' ) );
-					const resourceDestPath = (path.join(dest_Path, 'static', 'resources'));
-					filteredNotes.forEach(async note => {
-						await resourceFetcher( note , resourceDir , resourceDestPath );
+					await fs.mkdirp(path.join(dest_Path, 'content', folderName));//markdown
+
+					await fs.mkdirp(path.join(dest_Path, 'static' , 'resources'));//static'
+
+					const resourceDestPath = (path.join(dest_Path, 'static' ,'resources'));
+
+					for (var i = 0; i < filteredNotes.length; i++) {
+						const note = filteredNotes[i];
+						await resourceFetcher(note, resourceDir, resourceDestPath, ssg);
+						console.log(note.body, 'hugo ke andar wala');
 						note.body = frontMatter + '\n' + note.body;
 						fs.writeFile(path.join(dest_Path, 'content', folderName, `${note.title}.md`), note.body);
-					});
+					};
 				} else if (ssg === 'gatsby') {
 					//---------handle exporting into gatsby
-					await fs.mkdirp(path.join(dest_Path, 'src', 'markdown'));
-					await fs.mkdirp( path.join( dest_Path ,'static', 'resources' ) );
-					const resourceDestPath = (path.join(dest_Path, 'static', 'resources'));
-					filteredNotes.forEach( async note => {
-						await resourceFetcher( note , resourceDir , resourceDestPath );
-						note.body = frontMatter + '\n' + note.body;
-						fs.writeFile(path.join(dest_Path, 'src', 'markdown', `${note.title}-${note.id}.md`), note.body);
+					await fs.mkdirp(path.join(dest_Path, 'src', 'markdown'));//markdown
+
+					fs.readdir(path.join(dest_Path, 'static'), async err => {
+						if (err) {
+							await fs.mkdirp( path.join( dest_Path , 'static' ) );//static
+						}
+						
+						const resourceDestPath = (path.join(dest_Path, 'static'));
+
+						for (var i = 0; i < filteredNotes.length; i++) {
+							const note = filteredNotes[i];
+							await resourceFetcher(note, resourceDir, resourceDestPath, ssg);
+							note.body = frontMatter + '\n' + note.body;
+							fs.writeFile(path.join(dest_Path, 'src', 'markdown', `${note.title}-${note.id}.md`), note.body);
+						};
 					});
 				} else if (ssg === 'jekyll') {
 					//---------handle exporting into gatsby
 					fs.readdir(path.join(dest_Path, '_posts'), async (err, files) => {
 						if (err) {
-							await fs.mkdirp( path.join( dest_Path , '_posts' ) );
+							await fs.mkdirp( path.join( dest_Path , '_posts' ) );//markdowns
 						}
-						await fs.mkdirp(path.join(dest_Path, 'resources'));
+						await fs.mkdirp(path.join(dest_Path, 'resources'));//static files
+
 						const resourceDestPath = (path.join(dest_Path , 'resources'));
 						
-						filteredNotes.forEach( async note => {
-							await resourceFetcher( note , resourceDir , resourceDestPath );
+						for(var i = 0; i < filteredNotes.length; i++) {
+							const note = filteredNotes[i];
+							await resourceFetcher( note , resourceDir , resourceDestPath , ssg  );
 							note.body = frontMatter + '\n' + note.body;
 							note.title = titleCreator(note.title);
 							fs.writeFile(path.join(dest_Path , '_posts' , `${note.title}-${note.id}.md`), note.body);
-						});
+						};
 					});
                 }
-				
-
-            },
-        });
+            }
+		});
+		
 		/*******************Driver Code*******************/
 
 		//---------respective command for main button
