@@ -3,10 +3,10 @@
 	"id": "com.export-to-ssg.aman-d-1-n-only",
 	"app_min_version": "1.7",
 	"version": "1.0.0",
-	"name": "export-to-ssg",
+	"name": "Export To SSG",
 	"description": "Export a collection of notes to static site generator project.",
 	"author": "aman-d-1-n-only",
-	"homepage_url": "",
-	"repository_url": "",
+	"homepage_url": "https://github.com/aman-d-1-n-only/joplin-exports-to-ssg#readme",
+	"repository_url": "https://github.com/aman-d-1-n-only/joplin-exports-to-ssg.git",
 	"keywords": []
 }

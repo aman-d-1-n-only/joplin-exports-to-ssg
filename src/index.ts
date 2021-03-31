@@ -33,8 +33,6 @@ async function resourceFetcher(note, resourceDir: string, destPath: string , ssg
 
 joplin.plugins.register({
 	onStart: async function () {
-		const { items } = await joplin.data.get(['notes', 'e05d81c2b1b040c2abaa02ed37ed5269', 'resources'], );
-		console.log(items);
 		const resourceDir = await joplin.settings.globalValue('resourceDir');
 
 		/*******************Dialog Configurations*******************/
