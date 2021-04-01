@@ -25,7 +25,7 @@
     "yargs": "^16.2.0"
   },
   "description": "This is a joplin plugin that exports collection of notes from [Joplin](https://joplinapp.org/) as markdown file along with their static files[ images , pdfs etc] to static site generator(ssg) project.",
-  "main": "webpack.config.js",
+
   "dependencies": {},
   "repository": {
     "type": "git",
