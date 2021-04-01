@@ -23,5 +23,17 @@
     "webpack": "^4.43.0",
     "webpack-cli": "^3.3.11",
     "yargs": "^16.2.0"
-  }
+  },
+  "description": "This is a joplin plugin that exports collection of notes from [Joplin](https://joplinapp.org/) as markdown file along with their static files[ images , pdfs etc] to static site generator(ssg) project.",
+  "main": "webpack.config.js",
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aman-d-1-n-only/joplin-exports-to-ssg.git"
+  },
+  "author": "aman-d-1-n-only",
+  "bugs": {
+    "url": "https://github.com/aman-d-1-n-only/joplin-exports-to-ssg/issues"
+  },
+  "homepage": "https://github.com/aman-d-1-n-only/joplin-exports-to-ssg#readme"
 }
